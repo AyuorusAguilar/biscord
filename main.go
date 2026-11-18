@@ -1,28 +1,48 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/AyuorusAguilar/Biscord/internal/db"
+	"github.com/AyuorusAguilar/Biscord/internal/handlers"
+	"github.com/AyuorusAguilar/Biscord/internal/logging"
 	"github.com/AyuorusAguilar/Biscord/internal/state"
+	"github.com/joho/godotenv"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
-
-	s := state.State{
-		ClientDir: "client/",
+	godotenv.Load()
+	// Database connection
+	database, err := sql.Open("sqlite", "./data.db")
+	if err != nil {
+		logging.Log("FATAL: Failed to open db connection!")
+		os.Exit(1)
 	}
-
+	// State declaration
+	s := state.State{
+		ClientDir: "./client/",
+		Queries: db.New(database),
+		K: os.Getenv("K"),
+	}
+	
+	// Log init
 	os.Remove("log.txt")
-	log("Booting...")
-
+	logging.Log("Booting...")
+	// Multiplex initialization
 	mux := http.NewServeMux()
-	mux.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir(s.ClientDir+"css/"))))
-	mux.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir(s.ClientDir+"js/"))))
-	mux.Handle("/img/", http.StripPrefix("/img/", http.FileServer(http.Dir(s.ClientDir+"img/"))))
+	// FileServer routes
+	mux.HandleFunc("/css/", logging.LogFileServerMiddleware("css", s))
+	mux.HandleFunc("/js/",logging.LogFileServerMiddleware("js", s))
+	mux.HandleFunc("/img/", logging.LogFileServerMiddleware("img", s))
+	// Client routes
 	route(mux, s)
+	// Api routes
+	mux.HandleFunc("/register", logging.LogApiMiddleware("/log", handlers.StateHandlerFuncMiddleware(s, handlers.RegisterUser)))
+	// Server configuraiton
 	server := &http.Server{
 		Addr:           ":8080",
 		Handler:        mux,
@@ -30,17 +50,10 @@ func main() {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	log("Listening at Port 8080...")
-	log("Check out http://localhost:8080/...")
+	// Server Start
+	logging.Log("Listening at Port 8080...")
+	logging.Log("Check out http://localhost:8080/...")
 	server.ListenAndServe()
 }
 
-func log(s string) {
-	s = fmt.Sprintf("%s\n", s)
-	logFile, err := os.OpenFile("log.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Printf("%s\n", "Logging failed!")
-	}
-	logFile.WriteString(s)
-	fmt.Print(s)
-}
+
