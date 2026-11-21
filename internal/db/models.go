@@ -8,9 +8,18 @@ import (
 	"time"
 )
 
+type Session struct {
+	ID               int64
+	Userid           int64
+	RefreshTokenHash []byte
+	ExpiresAt        time.Time
+	CreatedAt        time.Time
+	ManualExpiration bool
+	Constraint       interface{}
+}
+
 type User struct {
 	ID        int64
-	Email     string
 	Username  string
 	Pass      string
 	CreatedAt time.Time

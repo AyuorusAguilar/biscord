@@ -27,8 +27,16 @@ func main() {
 		ClientDir: "./client/",
 		Queries: db.New(database),
 		K: os.Getenv("K"),
+		JWTDuration: 5 * time.Minute,
+		SessionDuration: 30 * time.Minute,
 	}
 	
+	// Enable *ON DELETE CASCADE* behavior
+	_, err = database.Exec("PRAGMA foreign_keys = ON;")
+	if err != nil {
+		logging.InnerLog("Error executing PRAGMA querie")
+		os.Exit(1)
+	}
 	// Log init
 	os.Remove("log.txt")
 	logging.Log("Booting...")
@@ -41,7 +49,11 @@ func main() {
 	// Client routes
 	route(mux, s)
 	// Api routes
-	mux.HandleFunc("/register", logging.LogApiMiddleware("/log", handlers.StateHandlerFuncMiddleware(s, handlers.RegisterUser)))
+	mux.HandleFunc("/register",		logging.LogApiMiddleware("/register", handlers.StateHandlerFuncMiddleware(s, handlers.RegisterUser)))
+	mux.HandleFunc("/login",		logging.LogApiMiddleware("/login", handlers.StateHandlerFuncMiddleware(s, handlers.LoginUser)))
+	mux.HandleFunc("/auth",		logging.LogApiMiddleware("/auth", handlers.StateHandlerFuncMiddleware(s, handlers.AuthRefresh)))
+	// Admin
+	mux.HandleFunc("/reset",		logging.LogApiMiddleware("/login", handlers.StateHandlerFuncMiddleware(s, handlers.ResetAdmin)))
 	// Server configuraiton
 	server := &http.Server{
 		Addr:           ":8080",
@@ -52,7 +64,7 @@ func main() {
 	}
 	// Server Start
 	logging.Log("Listening at Port 8080...")
-	logging.Log("Check out http://localhost:8080/...")
+	logging.Log("Check out http://localhost:8080/...\nLog:\n")
 	server.ListenAndServe()
 }
 

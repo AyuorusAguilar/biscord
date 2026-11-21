@@ -7,7 +7,8 @@ import (
 
 	"github.com/AyuorusAguilar/Biscord/internal/state"
 )
-
+// Writes the passed string on the console and writes it on a
+// log.txt file in the working directry
 func Log(s string) {
 	s = fmt.Sprintf("%s\n", s)
 	logFile, err := os.OpenFile("log.txt", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
@@ -16,6 +17,13 @@ func Log(s string) {
 	}
 	logFile.WriteString(s)
 	fmt.Print(s)
+}
+
+// InnerLog just calls Log with a tab preceeding the passed string.
+// This is intended to be used inside handlers to make the log more
+// readable
+func InnerLog(s string) {
+	Log(fmt.Sprintf("\t%s", s))
 }
 
 func LogFileServerMiddleware(dir string, s state.State) http.HandlerFunc{

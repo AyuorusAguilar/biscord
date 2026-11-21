@@ -7,40 +7,63 @@ package db
 
 import (
 	"context"
+	"time"
 )
+
+const getIdByUsername = `-- name: GetIdByUsername :one
+
+SELECT id FROM users WHERE username = ?1
+`
+
+// Probably all queries should be usable in the sqlite3 terminal, that's the reason of this alias
+func (q *Queries) GetIdByUsername(ctx context.Context, username string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getIdByUsername, username)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
 
 const registerUser = `-- name: RegisterUser :one
 INSERT INTO users (
-    email,
-    pass,
-    username,
-    created_at,
-    updated_at
+	username,
+	pass,
+	created_at,
+	updated_at
 ) VALUES (
-    ?1,
-    ?2,
-    ?3,
-    DATETIME('now'),
-    DATETIME('now')
-) RETURNING id, email, username, pass, created_at, updated_at
+	?1,
+	?2,
+	DATETIME('now'),
+	DATETIME('now')
+) RETURNING username, created_at
 `
 
 type RegisterUserParams struct {
-	Email    string
-	Pass     string
 	Username string
+	Pass     string
 }
 
-func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, registerUser, arg.Email, arg.Pass, arg.Username)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.Username,
-		&i.Pass,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
+type RegisterUserRow struct {
+	Username  string
+	CreatedAt time.Time
+}
+
+func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (RegisterUserRow, error) {
+	row := q.db.QueryRowContext(ctx, registerUser, arg.Username, arg.Pass)
+	var i RegisterUserRow
+	err := row.Scan(&i.Username, &i.CreatedAt)
 	return i, err
+}
+
+const usernameExists = `-- name: UsernameExists :one
+SELECT EXISTS (
+	SELECT 1 FROM users
+	WHERE username = ?1
+) as existe
+`
+
+func (q *Queries) UsernameExists(ctx context.Context, username string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, usernameExists, username)
+	var existe bool
+	err := row.Scan(&existe)
+	return existe, err
 }

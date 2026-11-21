@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func UnmarshallJson(rbody io.ReadCloser, dest *any) error {
+func UnmarshallJson(rbody io.ReadCloser, dest any) error {
 	baits, err := io.ReadAll(rbody)
 	if err != nil {
 		return fmt.Errorf("Invalid request Body")
@@ -31,5 +31,7 @@ func WriteJsonResponse(w http.ResponseWriter, statusCode int, jsonBody any) erro
 
 func WriteError(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
+	w.Header().Add("Content-Type", "text/html")
+	w.Header().Add("Content-Type", "charset=utf-8")
 	w.Write([]byte(message))
 }
