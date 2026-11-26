@@ -5,8 +5,30 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
+
+type Channel struct {
+	ID        int64
+	Type      sql.NullString
+	Name      sql.NullString
+	CreatedAt sql.NullTime
+	Image     []byte
+}
+
+type Channelaccess struct {
+	Userid    int64
+	Channelid int64
+}
+
+type Message struct {
+	ID        int64
+	Senderid  int64
+	Channelid int64
+	Content   string
+	CreatedAt time.Time
+}
 
 type Session struct {
 	ID               int64
@@ -15,13 +37,14 @@ type Session struct {
 	ExpiresAt        time.Time
 	CreatedAt        time.Time
 	ManualExpiration bool
-	Constraint       interface{}
 }
 
 type User struct {
-	ID        int64
-	Username  string
-	Pass      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID          int64
+	Username    string
+	Profilepic  []byte
+	Pass        string
+	Dmchannelid int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }

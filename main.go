@@ -43,15 +43,22 @@ func main() {
 	// Multiplex initialization
 	mux := http.NewServeMux()
 	// FileServer routes
-	mux.HandleFunc("/css/", logging.LogFileServerMiddleware("css", s))
-	mux.HandleFunc("/js/",logging.LogFileServerMiddleware("js", s))
+	mux.HandleFunc("/css/",	logging.LogFileServerMiddleware("css", s))
+	mux.HandleFunc("/js/",	logging.LogFileServerMiddleware("js", s))
 	mux.HandleFunc("/img/", logging.LogFileServerMiddleware("img", s))
 	// Client routes
 	route(mux, s)
 	// Api routes
+	//		Authentication
 	mux.HandleFunc("/register",		logging.LogApiMiddleware("/register", handlers.StateHandlerFuncMiddleware(s, handlers.RegisterUser)))
 	mux.HandleFunc("/login",		logging.LogApiMiddleware("/login", handlers.StateHandlerFuncMiddleware(s, handlers.LoginUser)))
-	mux.HandleFunc("/auth",		logging.LogApiMiddleware("/auth", handlers.StateHandlerFuncMiddleware(s, handlers.AuthRefresh)))
+	mux.HandleFunc("/auth",			logging.LogApiMiddleware("/auth", handlers.StateHandlerFuncMiddleware(s, handlers.AuthRefreshUser)))
+	mux.HandleFunc("/logout",		logging.LogApiMiddleware("/login", handlers.StateHandlerFuncMiddleware(s, handlers.LogoutUser)))
+	//		Other (?)
+	mux.HandleFunc("GET /user/{userid}",	logging.LogApiMiddleware("GET /user/{userid}", handlers.StateHandlerFuncMiddleware(s, handlers.GetUserById)))
+	mux.HandleFunc("POST /messages",	logging.LogApiMiddleware("POST /messages", handlers.StateHandlerFuncMiddleware(s, handlers.PutMessage)))
+	mux.HandleFunc("GET /messages",	logging.LogApiMiddleware("GET /messages", handlers.StateHandlerFuncMiddleware(s, handlers.GetMessagesFromChannelByID)))
+
 	// Admin
 	mux.HandleFunc("/reset",		logging.LogApiMiddleware("/login", handlers.StateHandlerFuncMiddleware(s, handlers.ResetAdmin)))
 	// Server configuraiton

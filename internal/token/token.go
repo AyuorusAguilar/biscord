@@ -31,7 +31,7 @@ func CreateJWT(userID int, tokenSecret string, expireIn time.Duration) (string, 
 // Notice that if the error includes 'token is expired' you should
 // return a *401 Unauthorized* response code instead of anything else,
 // so the client can request a new jwt and try the request again.
-func ValidateJWT(tokenString string, tokenSecret string) (int, error) {
+func ValidateJWT(tokenString string, tokenSecret string) (int64, error) {
 	a := jwt.RegisteredClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, &a,
 		func(t *jwt.Token) (any, error) { return []byte(tokenSecret), nil },
@@ -43,7 +43,7 @@ func ValidateJWT(tokenString string, tokenSecret string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	id, err := strconv.Atoi(subject)
+	id, err := strconv.ParseInt(subject, 10, 64)
 	if err != nil {
 		return 0, err
 	}

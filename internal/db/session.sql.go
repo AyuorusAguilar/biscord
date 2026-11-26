@@ -14,7 +14,7 @@ const expireSession = `-- name: ExpireSession :one
 UPDATE sessions
 	SET manual_expiration = TRUE
 	WHERE id = ?1
-	RETURNING id, userid, refresh_token_hash, expires_at, created_at, manual_expiration, "constraint"
+	RETURNING id, userid, refresh_token_hash, expires_at, created_at, manual_expiration
 `
 
 func (q *Queries) ExpireSession(ctx context.Context, sessionid int64) (Session, error) {
@@ -27,13 +27,12 @@ func (q *Queries) ExpireSession(ctx context.Context, sessionid int64) (Session, 
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.ManualExpiration,
-		&i.Constraint,
 	)
 	return i, err
 }
 
 const getLastSession = `-- name: GetLastSession :one
-SELECT id, userid, refresh_token_hash, expires_at, created_at, manual_expiration, "constraint" FROM sessions 
+SELECT id, userid, refresh_token_hash, expires_at, created_at, manual_expiration FROM sessions 
 	WHERE 
 		userID = ?1
 	ORDER BY created_at DESC
@@ -50,13 +49,12 @@ func (q *Queries) GetLastSession(ctx context.Context, userid int64) (Session, er
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.ManualExpiration,
-		&i.Constraint,
 	)
 	return i, err
 }
 
 const getSessionByRefreshToken = `-- name: GetSessionByRefreshToken :one
-SELECT id, userid, refresh_token_hash, expires_at, created_at, manual_expiration, "constraint" FROM sessions
+SELECT id, userid, refresh_token_hash, expires_at, created_at, manual_expiration FROM sessions
 	WHERE refresh_token_hash = ?1
 	LIMIT 1
 `
@@ -71,7 +69,6 @@ func (q *Queries) GetSessionByRefreshToken(ctx context.Context, refreshTokenHash
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.ManualExpiration,
-		&i.Constraint,
 	)
 	return i, err
 }
@@ -87,7 +84,7 @@ INSERT INTO sessions (
 	?2,
 	?3,
 	DATETIME('now')
-) RETURNING id, userid, refresh_token_hash, expires_at, created_at, manual_expiration, "constraint"
+) RETURNING id, userid, refresh_token_hash, expires_at, created_at, manual_expiration
 `
 
 type RegisterSessionParams struct {
@@ -106,7 +103,6 @@ func (q *Queries) RegisterSession(ctx context.Context, arg RegisterSessionParams
 		&i.ExpiresAt,
 		&i.CreatedAt,
 		&i.ManualExpiration,
-		&i.Constraint,
 	)
 	return i, err
 }

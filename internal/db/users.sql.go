@@ -23,23 +23,43 @@ func (q *Queries) GetIdByUsername(ctx context.Context, username string) (int64, 
 	return id, err
 }
 
+const getUserById = `-- name: GetUserById :one
+SELECT username, profilepic, DMchannelID FROM users WHERE id = ?1
+`
+
+type GetUserByIdRow struct {
+	Username    string
+	Profilepic  []byte
+	Dmchannelid int64
+}
+
+func (q *Queries) GetUserById(ctx context.Context, userid int64) (GetUserByIdRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, userid)
+	var i GetUserByIdRow
+	err := row.Scan(&i.Username, &i.Profilepic, &i.Dmchannelid)
+	return i, err
+}
+
 const registerUser = `-- name: RegisterUser :one
 INSERT INTO users (
 	username,
 	pass,
+	DMchannelID,
 	created_at,
 	updated_at
 ) VALUES (
 	?1,
 	?2,
+	?3,
 	DATETIME('now'),
 	DATETIME('now')
 ) RETURNING username, created_at
 `
 
 type RegisterUserParams struct {
-	Username string
-	Pass     string
+	Username    string
+	Pass        string
+	Dmchannelid int64
 }
 
 type RegisterUserRow struct {
@@ -48,7 +68,7 @@ type RegisterUserRow struct {
 }
 
 func (q *Queries) RegisterUser(ctx context.Context, arg RegisterUserParams) (RegisterUserRow, error) {
-	row := q.db.QueryRowContext(ctx, registerUser, arg.Username, arg.Pass)
+	row := q.db.QueryRowContext(ctx, registerUser, arg.Username, arg.Pass, arg.Dmchannelid)
 	var i RegisterUserRow
 	err := row.Scan(&i.Username, &i.CreatedAt)
 	return i, err

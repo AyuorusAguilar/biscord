@@ -33,7 +33,7 @@ func TestJwts(ttool *testing.T) {
 			if t.expectedToFail { return }
 			ttool.Fatalf("Error in test number %d:\n\t%v\n", i, err)
 		}
-		if id != t.id {
+		if id != int64(t.id) {
 			ttool.Fatalf("Error in test number %d:\n\t%s\n", i, fmt.Sprintf("The returned id doesn't match! expecte:%d, got:%d", t.id, id))
 		}
 	}
